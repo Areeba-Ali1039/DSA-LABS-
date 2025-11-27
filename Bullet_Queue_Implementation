@@ -1,1 +1,86 @@
+#include <iostream>
+using namespace std;
 
+class Queue {
+public:
+    int arr[20];      // magazine can hold max 20 bullets
+    int front;
+    int rear;
+    int size;
+    int capacity;
+
+    Queue() {
+        front = 0;
+        rear = -1;
+        size = 0;
+        capacity = 20;
+    }
+
+    bool isEmpty() {
+        return size == 0;
+    }
+
+    bool isFull() {
+        return size == capacity;
+    }
+
+    void enqueue(int x) {
+        if (isFull()) return;
+        rear = (rear + 1) % capacity;
+        arr[rear] = x;
+        size++;
+    }
+
+    int dequeue() {
+        if (isEmpty()) return -1;
+        int val = arr[front];
+        front = (front + 1) % capacity;
+        size--;
+        return val;
+    }
+};
+
+int main() {
+
+    Queue magazine;
+    int totalBullets = 100;   // total bullets available
+    int fired = 0;
+
+    // Load first 20 bullets
+    for (int i = 0; i < 20; i++) {
+        magazine.enqueue(1);
+        totalBullets--;
+    }
+
+    cout << "Starting firing...\n";
+
+    while (fired < 100) {
+
+        // FIRE ONE BULLET
+        magazine.dequeue();
+        fired++;
+        cout << "Fired bullet " << fired << endl;
+
+        // RELOAD ONE BULLET IF STILL AVAILABLE
+        if (totalBullets > 0) {
+            magazine.enqueue(1);
+            totalBullets--;
+            cout << "Reloaded 1 bullet. Remaining bullets to reload: " 
+                 << totalBullets << endl;
+        }
+
+        // IF MAGAZINE EMPTY AND STILL BULLETS LEFT → LOAD FULL AGAIN
+        if (magazine.isEmpty() && totalBullets > 0) {
+            cout << "\nMagazine empty! Reloading full...\n";
+            int load = min(20, totalBullets);
+            for (int i = 0; i < load; i++) {
+                magazine.enqueue(1);
+                totalBullets--;
+            }
+        }
+    }
+
+    cout << "\nAll bullets fired!\n";
+
+    return 0;
+}
