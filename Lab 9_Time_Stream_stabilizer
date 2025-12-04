@@ -1,1 +1,207 @@
+#include <iostream>
+#include <string>
+#include <limits>
+using namespace std;
+
+struct TimeCapsule {
+    int year;
+    string eventName;
+    TimeCapsule* left;
+    TimeCapsule* right;
+
+    TimeCapsule(int y, string n) : year(y), eventName(n), left(nullptr), right(nullptr) {}
+};
+
+class TimeTree {
+private:
+    TimeCapsule* root;
+    TimeCapsule* insertHelper(TimeCapsule* node, int year, string name) {
+        if (!node) return new TimeCapsule(year, name);
+
+        if (year < node->year)
+            node->left = insertHelper(node->left, year, name);
+        else if (year > node->year)
+            node->right = insertHelper(node->right, year, name);
+    
+        return node;
+    }
+    TimeCapsule* searchHelper(TimeCapsule* node, int year) {
+        if (!node) return nullptr;
+        if (node->year == year) return node;
+        if (year < node->year) return searchHelper(node->left, year);
+        return searchHelper(node->right, year);
+    }
+
+    TimeCapsule* findMin(TimeCapsule* node) {
+        while (node && node->left)
+            node = node->left;
+        return node;
+    }
+    TimeCapsule* deleteHelper(TimeCapsule* node, int year) {
+        if (!node) return nullptr;
+
+        if (year < node->year)
+            node->left = deleteHelper(node->left, year);
+
+        else if (year > node->year)
+            node->right = deleteHelper(node->right, year);
+
+        else {
+            // Found node
+            if (!node->left && !node->right) {
+                delete node;
+                return nullptr;
+            }
+            else if (!node->left) {
+                TimeCapsule* temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (!node->right) {
+                TimeCapsule* temp = node->left;
+                delete node;
+                return temp;
+            }
+            else {
+                TimeCapsule* successor = findMin(node->right);
+                node->year = successor->year;
+                node->eventName = successor->eventName;
+                node->right = deleteHelper(node->right, successor->year);
+            }
+        }
+        return node;
+    }
+
+    void inOrder(TimeCapsule* node) {
+        if (!node) return;
+        inOrder(node->left);
+        cout << node->year << ": " << node->eventName << endl;
+        inOrder(node->right);
+    }
+
+    int getMinYear(TimeCapsule* node) {
+        if (!node) return -1;
+        while (node->left) node = node->left;
+        return node->year;
+    }
+    int getMaxYear(TimeCapsule* node) {
+        if (!node) return -1;
+        while (node->right) node = node->right;
+        return node->year;
+    }
+
+    void destroyTree(TimeCapsule* node) {
+        if (node) {
+            destroyTree(node->left);
+            destroyTree(node->right);
+            delete node;
+        }
+    }
+
+public:
+    TimeTree() { root = nullptr; }
+    ~TimeTree() { destroyTree(root); }
+
+  
+    void inject(int year, string name) {
+        cout << "> System: Injecting " << year << "... ";
+
+        if (searchHelper(root, year) != nullptr) {
+            cout << "Year already exists. Timeline unchanged." << endl;
+            return;
+        }
+
+        root = insertHelper(root, year, name);
+        cout << "Timeline stable." << endl;
+    }
+
+    void resolveParadox(int year) {
+        cout << "> Alert: Paradox detected at " << year << "!" << endl;
+
+        if (!searchHelper(root, year)) {
+            cout << "> System: Year " << year << " not found. No changes." << endl;
+            return;
+        }
+
+        root = deleteHelper(root, year);
+        cout << "> System: Year " << year << " removed. Timeline stabilized." << endl;
+    }
+
+    void search(int year) {
+        cout << "> Query: Searching for " << year << "..." << endl;
+
+        TimeCapsule* result = searchHelper(root, year);
+        if (result) {
+            cout << "> Result: Event Found! [" << result->year << ": " << result->eventName << "]" << endl;
+        } else {
+            cout << "> Result: Year " << year << " not found in current timeline." << endl;
+        }
+    }
+
+    void report() {
+        cout << "> COMMAND: CHRONOLOGICAL REPORT" << endl;
+        cout << "-------------------------------" << endl;
+
+        if (!root) {
+            cout << "(Timeline Empty)" << endl;
+        } else {
+            inOrder(root);
+        }
+
+        cout << "-------------------------------" << endl;
+    }
+    void calculateTimeSpan() {
+        if (!root) {
+            cout << "> Time Span: Timeline empty." << endl;
+            return;
+        }
+
+        int minY = getMinYear(root);
+        int maxY = getMaxYear(root);
+
+        cout << "> Time Span: " << maxY - minY << " years." << endl;
+    }
+};
+int main() {
+    TimeTree chronos;
+    string command;
+    int year;
+    string eventName;
+
+    cout << "--- CHRONOS TIME STABILIZER V1.0 ---" << endl;
+    cout << "Waiting for Time Stream Inputs..." << endl << endl;
+
+    while (cin >> command) {
+        if (command == "INJECT") {
+            cin >> year;
+            getline(cin >> ws, eventName);
+            chronos.inject(year, eventName);
+        }
+        else if (command == "PARADOX") {
+            cin >> year;
+            chronos.resolveParadox(year);
+        }
+        else if (command == "SEARCH") {
+            cin >> year;
+            chronos.search(year);
+        }
+        else if (command == "REPORT") {
+            chronos.report();
+        }
+        else if (command == "TIMESPAN") {
+            chronos.calculateTimeSpan();
+        }
+        else if (command == "EXIT") {
+            break;
+        }
+        else {
+            cout << "> Unknown Command." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
 
